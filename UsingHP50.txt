@@ -1,0 +1,198 @@
+I'm an electrical Engineer, with a specialty in designing radio's.
+There are a couple of dozen equations that I use fairly frequently, and
+I've programmed them into PEQEM rather than use Excel because of the
+numeric solver and multiple equation solver that's built into the 50G.
+
+Asciiflow (http://www.asciiflow.com/ ) is a useful website/drawing tool
+that will create ASCII drawing for documentation. While it's not as nice
+looking at a GROB, it's a lot faster to put together, and text is all
+that PEQEM supports.
+
+Since I like typing on a large keyboard as well, I use a SD card to hold
+text files, and translate them on the calculator from ASCII format to
+directories and variables. I've also developed a couple of utility
+programs to assist with this, and I'll document them here. I use
+AsciiBin (http://www.hpcalc.org/details.php?id=3648) to go from a text
+string on the stack to HP50g executable objects. I've renamed
+ASCIIBIN.49 to UZ on my calculator, just to make things easier to type.
+
+First, the PEQUM Equation Directory. This is a cut down version of the
+one I use, as that one is ~ 20k of ASCII. I use the @ as a comment
+delimiter, and try to format equations so that they are readable. This
+text file resides in the root directory of the SD Card.
+
+PEQUM is located here http://www.hpcalc.org/details.php?id=6306 , and is
+a pretty handy equation library routine.
+
+
+*******************************************************************************
+%%HP: T(3)A(D)F(.);
+@ Collected directory of equations for PEQUM.
+@ PEQUM:
+@ Equations are stored in a directory
+@ {Equations}.
+@ Constants can enter directly
+@ variable$ is a text note Can attach to variables or directories
+@ Can also support subdirectories.
+@ http://www.asciiflow.com/ is a useful website for creating some
+
+
+
+
+DIR
+@ Start of Directory
+@******************
+RXPerformance$
+"Directory of Receiver Performance
+Equations"
+RXPerformance
+DIR
+@+++++++++
+IP3.eq$
+"All powers in dBm
+OIP3: Output IP3
+Pout: Single Tone Output Power
+Pspur: Spurious 3rd order Tone
+From RFCafe web site. "
+IP3.eq 'OIP3=3/2*Pout-1/2*Pspur'
+@+++++++++
+IIP3.eq 'IIP3=(2.*PD+PA+G-IMD3)/2.'
+IIP3.eq$
+"Input IP3
+IIP3:Input IP3
+PD: Input Power
+PA:
+G: Gain
+IMD3: IMD3 Power"
+@+++++++++
+RXSense.eq 'RXSense=BBSNR+10.*LOG(1.38E-23*(T+273.15)*BW*1000.*(NFRx))'
+RXSense.eq$
+"Receiver Sensitivity
+RXSense: Receiver Sensitivity,
+BBSNR: Baseband SNR at Sensitivity
+T: Temperature, C
+BW: System BW
+NFRx: Receiver Noise Figure"
+@+++++++++
+FriisV.eq 'Ftot=Fm+(Fmp1-1)/gm^2*(1/(Rim/(Romm1+Rim))^2)*(1/(Romm1/Rom))'
+FriisV.eq$
+"From Gu, Eq. 4.2.20
+Fm: Noise Factor, Stage m
+Fmp1: Noise Factor, Stage m+1
+gm: Stage Voltage Gain
+Rim: Input R Stage m
+Romm1: Output R, Stage m-1
+Rom: Output R, Stage m"
+@+++++++++
+IR.eq 'IR=10*LOG((1+2*(1+A)*COS(P)+(1+A)^2)/(1-(2*(1+A)*COS(P)+(1+A)^2)))'
+IR.eq$
+"IR: Image Reject
+A: Amplitude Mismatch, Linear
+P: Phase Mismatch"
+@+++++++++
+IRINP.eq 'IRINP=10*LOG(Fc2kT0*LN(f2/f1)+10^(NFth/10)*(f2-f1))+-170.97'
+IRINP.eq$
+"IRINP: Input Referred Noise Power
+Fc2KTO: 1/f Noise Corner
+f1: Start Frequency
+f2: Stop Frequency
+NFth: Stage noise Figure"
+@+++++++++
+
+LNAFOM.eq 'FOM=(ALOG(G/10)*ALOG(IIP3/10)*f)/((ALOG(NF/10)-1)*P)'
+LNAFOM.eq$
+"LNA FOM
+FOM: FOM
+G: Gain(dB)
+IIP3: Input IP3(dB)
+NF: Noise Figure(dB)
+P: DC Power (mW)
+f: Center Freq (GHz)
+From Yao et al: Algorithmic Design of CMOS LNA's and Pa's for 60 Ghz Radio
+"
+
+
+@+++++++++
+END
+END
+
+
+'EQUATION'
+PGDIR
+'EQUATION'
+STO
+
+*******************************************************************************
+In practice, I recall this text file from the SD Card to the stack, and
+then run UZ on it, to translate it to a directory. I can then "EVAL"
+this, and the object on the stack will purge the old 'EQUATION'
+directory and store the new one into the same one. Below is the program
+that I use (from the home directory) to pull EQ02.txt and a Notes file.
+The Notes File is a simple text file that I display using VV, which is
+the text display part from ( http://www.hpcalc.org/details.php?id=7213).
+When I update either text file on the SD card, I run this utility, which
+I've named rclSD, to pull from the SD card and install on the
+calculator.
+
+
+
+*******************************************************************************
+Recall from the SD Card. Stored in my home directory.
+
+*******************************************************************************
+
+%%HP: T(3)A(D)F(.);
+@ Utility to recall directory objects from the SD card
+@ and put them into the {HOME DEV} sub directory. Each one of these
+@ directory objects will purgedir of the previous version and then
+@ store itself into that named variable.
+\<<
+PATH @ Put the Path on the Stack
+
+{HOME} EVAL @ Move to Home
+:3:"EQ02.txt" RCL UZ EVAL @ Get Equations directory
+:3:"HP50GNotes.txt" RCL UZ EVAL @ Get Notes file
+
+EVAL @ Now I'm done, EVAL the path to get back
+SORTD
+\>>
+
+*******************************************************************************
+Notes on the 50G
+
+*******************************************************************************
+
+%%HP: T(3)A(D)F(.);
+
+\<<
+\<< "Notes on HP50G Usage
+LIBS - Returns list of installed
+libaries to stack
+
+50g display size 131x80
+
+Updating the two equation libraries
+that I have on the 50g:
+
+PEQUM:
+Equations are stored in a
+directory {Equations}. RPL code
+bkupeqn copies the equation to
+the SD card, after running uz
+on it. File name is eq.txt.
+Once this is on a computer,
+use EQ01.txt as the human
+readable version to edit
+and cleanup and then use
+uz to recover the directory
+object.
+
+
+
+"
+VV DROP \>>
+'NOTES'
+PURGE
+'NOTES'
+STO
+\>> 
